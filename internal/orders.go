@@ -1,10 +1,5 @@
 package internal
 
-import (
-	"fmt"
-	"sync"
-)
-
 type order struct {
 	Id              string           	`json:"id"`
 	UserId          string          	`json:"user_id"`

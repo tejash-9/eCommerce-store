@@ -44,11 +44,22 @@ func (s *shoppingEngine) RegisterProduct(name string, description string, quanti
 	return product, nil
 }
 
+func (s *shoppingEngine) GetProduct(productId string) (*product, error) {
+	if s.Inventory.Products[productId] == nil {
+		return nil, fmt.Errorf("Product not found")
+	}
+	return s.Inventory.Products[productId], nil
+}
+
 func (p *product) IsAvailable(quantity int) bool {
 	return p.Quantity >= quantity
 }
 
-func (p *product) AddtoStock(quantity int) {
+func (p *product) GetPrice() float64 {
+	return p.Price
+}
+
+func (p *product) AddToStock(quantity int) {
 	p.Quantity += quantity
 }
 

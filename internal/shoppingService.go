@@ -10,7 +10,14 @@ import (
 
 type ShoppingEngine interface {
 	RegisterUser(name string, email string) (*user, error)
+	GetUser(userId string) (*user, error)
 	GetUserByUsername(username string) (*user, error)
+	RegisterProduct(name string, description string, quantity int, sellerId string, price float64) (*product, error)
+	GetProduct(productId string) (*product, error)
+	AddToCart(userId string, productId string, quantity int) (map[string]int, error)
+	GetDiscountCoupon(userId string) (string, error)
+	Checkout(userId string, couponCode string) (*order, error)
+	OrderHistory() OrderBook
 }
 
 type shoppingEngine struct {
@@ -91,7 +98,7 @@ func (s *shoppingEngine) Checkout(userId string, couponCode string) (*order, err
 
 	var amount, discount float64
 	for key, value := range s.Users[userId].Cart {
-		amount += float64(float64(s.Products[key].Price) * float64(value))
+		amount += float64(float64(s.Inventory.Products[key].GetPrice()) * float64(value))
 	}
 	var currentOrder *order
 
@@ -113,7 +120,7 @@ func (s *shoppingEngine) Checkout(userId string, couponCode string) (*order, err
 		var err error
 		currentOrder, err = s.PlaceOrder(userId, amount, couponCode, discount)
 		if err != nil {
-			return nil, fmt.Errorf("Error processing order: %v", err)
+			return nil, err
 		}
         delete(s.Coupons, userId)
 	} else {
@@ -121,7 +128,7 @@ func (s *shoppingEngine) Checkout(userId string, couponCode string) (*order, err
 		var err error
 		currentOrder, err = s.PlaceOrder(userId, amount, couponCode, discount)
 		if err != nil {
-			return nil, fmt.Errorf("Error processing order: %v", err)
+			return nil, err
 		}
 	}
 	// Clear the cart after checkout

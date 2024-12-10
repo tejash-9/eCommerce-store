@@ -13,7 +13,7 @@ type user struct {
 
 func newUser(id string, name string, email string) *user {
 	return &user{
-		ID:       id,
+		Id:       id,
 		Name:     name,
 		Email:    email,
 		Cart:     make(map[string]int),

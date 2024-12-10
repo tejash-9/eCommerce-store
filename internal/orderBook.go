@@ -32,17 +32,15 @@ func (s *shoppingEngine) ValidateCart(userId string) (*int, error) {
 	defer s.OrderBook.OrderMutex.Unlock()
 
 	items := 0
-	var removedProducts []string
+	var processedItems []string
 	for key, value := range s.Users[userId].Cart {
 		// Attempt to remove the product from stock
 		if !s.Inventory.Products[key].RemoveFromStock(value) {
 			// Rollback previously removed products and return error
-			s.RollbackStock(userId, removedProducts)
+			s.RollbackStock(userId, processedItems)
 			return nil, fmt.Errorf("product %s is out of stock", key)
 		}
-
-		// Successfully removed product from stock, so track it
-		removedProducts = append(removedProducts, key)
+		processedItems = append(processedItems, key)
 		items += value
 	}
 	return &items, nil
