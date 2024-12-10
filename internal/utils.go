@@ -26,3 +26,20 @@ func generateUUID() string {
 	encoded := base64.RawURLEncoding.EncodeToString(newUUID[:]) // RawURLEncoding for URL-safe encoding
 	return encoded
 }
+
+// GenerateCouponCode generates a random alphanumeric coupon code
+func generateCouponCode(length int) string {
+    // Define the characters that can be used in the coupon code
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+    // Initialize random number generator
+    rand.Seed(time.Now().UnixNano())
+
+    // Generate a random string of the specified length
+    var builder strings.Builder
+    for i := 0; i < length; i++ {
+        builder.WriteByte(chars[rand.Intn(len(chars))])
+    }
+
+    return builder.String()
+}
