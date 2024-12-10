@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type OrderBook inter {
+type OrderBook interface {
 	TotalSoldItems() 		int
 	TotalPurchaseAmount() 	float64
 	ListDiscountCoupons() 	[]string 
@@ -23,7 +23,7 @@ type orderBook struct {
 	Counter             int
 }
 
-func (s *shoppingEngine) OrderBook() OrderBook {
+func (s *shoppingEngine) OrderHistory() OrderBook {
 	return s.OrderBook
 }
 
@@ -32,16 +32,28 @@ func (s *shoppingEngine) ValidateCart(userId string) (*int, error) {
 	defer s.OrderBook.OrderMutex.Unlock()
 
 	items := 0
+	var removedProducts []string
 	for key, value := range s.Users[userId].Cart {
-		if s.Products[key].Quantity < value {
-			return nil, fmt.Errorf("product %s is out of stock")
+		// Attempt to remove the product from stock
+		if !s.Inventory.Products[key].RemoveFromStock(value) {
+			// Rollback previously removed products and return error
+			s.RollbackStock(userId, removedProducts)
+			return nil, fmt.Errorf("product %s is out of stock", key)
 		}
-	}
-	for key, value := range s.Users[userId].Cart {
-		s.Products[key].Quantity = s.Products[key].Quantity - value
+
+		// Successfully removed product from stock, so track it
+		removedProducts = append(removedProducts, key)
 		items += value
 	}
 	return &items, nil
+}
+
+func (s *shoppingEngine) RollbackStock(userId string, products []string) {
+	for _, productId := range products {
+		if s.Inventory.Products[productId] != nil {
+			s.Inventory.Products[productId].AddToStock(s.Users[userId].Cart[productId])
+		}
+	}
 }
 
 func (o *orderBook) TotalSoldItems() int {
