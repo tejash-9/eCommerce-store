@@ -1,52 +1,25 @@
 package internal
 
+// order represents an order placed by a user
 type order struct {
-	Id              string           	`json:"id"`
-	UserId          string          	`json:"user_id"`
-	OrderCart       map[string]int  	`json:"order_cart"`
-	CartTotal     	float64             `json:"amount"`
-	Discount        float64            	`json:"discount"`
-	DiscountCoupon  string            	`json:"discount_coupon"`
-	AmountToPay     float64          	`json:"amount_to_pay"`
+	Id              string           	`json:"id"`              	// Unique order ID
+	UserId          string          	`json:"user_id"`         	// User ID who placed the order
+	OrderCart       map[string]int  	`json:"order_cart"`      	// Cart with product IDs and quantities
+	CartTotal     	float64             `json:"amount"`           	// Total cart value before discount
+	Discount        float64            	`json:"discount"`        	// Discount applied on the order
+	DiscountCoupon  string            	`json:"discount_coupon"` 	// Applied coupon code
+	AmountToPay     float64          	`json:"amount_to_pay"`    	// Final amount after discount
 }
 
+// newOrder creates a new order instance
 func newOrder(id string, userId string, cart map[string]int, amount float64, coupon string, discount float64, finalAmount float64) *order {
 	return &order{
-		Id:             id,
-		UserId:         userId,
-		OrderCart:      cart,
-		CartTotal:      amount,
-		DiscountCoupon: coupon,
-		Discount:       discount,
-		AmountToPay:    finalAmount,
+		Id:             id,               // Set unique order ID
+		UserId:         userId,           // Set user ID
+		OrderCart:      cart,             // Set order cart with product quantities
+		CartTotal:      amount,           // Set total cart amount before discount
+		DiscountCoupon: coupon,           // Set applied coupon code
+		Discount:       discount,         // Set discount applied on the order
+		AmountToPay:    finalAmount,      // Set final amount after discount
 	}
-}
-
-func (s *shoppingEngine) PlaceOrder(userId string, amount float64, coupon string, discount float64) (*order, error) {
-	items, err := s.ValidateCart(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Total payable amount 
-	finalAmount := amount - discount
-
-	// Update the total items, purchase and discount amount
-	s.OrderBook.ItemsSold += *items
-	s.OrderBook.PurchaseAmount += finalAmount
-	s.OrderBook.TotalDiscount += discount
-
-	if coupon != "" {
-		s.OrderBook.AppliedCoupons = append(s.OrderBook.AppliedCoupons, coupon)
-	}
-	// Generate a new order ID and create the order
-	id := generateUUID()
-	order := newOrder(id, userId, s.Users[userId].Cart, amount, coupon, discount, finalAmount)
-
-	// Store the order in the orderBook
-	s.OrderBook.Orders[id] = order
-	s.OrderBook.OrdersByUserId[userId] = append(s.OrderBook.OrdersByUserId[userId], order)
-	s.OrderBook.Counter++
-
-	return order, nil
 }

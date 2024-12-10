@@ -7,15 +7,17 @@ import (
     "strings"
     "encoding/base64"
     "github.com/google/uuid"
+    "github.com/ecommerce-store/utilities"
 )
 
 var (
 	shoppingApp 	*shoppingEngine
 	instance        sync.Once
+    Logger = utilities.Logger.Session("dev", "github.com/ecommerce-store")
 )
 
-// nTH order
-const OrderThresholdEnv = "ORDER_THRESHOLD"
+// nTH order (value of n)
+const DiscountIntervalEnv = "DISCOUNT_INTERVAL"
 
 // GenerateUUID generates a new UUID
 func generateUUID() string {

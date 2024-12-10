@@ -24,7 +24,7 @@ func RegisterRoutes(router *gin.Engine, app internal.ShoppingEngine) {
 }
 
 func registerAdminRoutes(rg *gin.RouterGroup, app internal.ShoppingEngine) {
-	rg.GET("/total_purchases", func(c *gin.Context) {
+	rg.GET("/purchase_amount", func(c *gin.Context) {
 		// Get the total amount for the purchase
 		amount := app.OrderHistory().TotalPurchaseAmount()
 
@@ -74,7 +74,7 @@ func registerAdminRoutes(rg *gin.RouterGroup, app internal.ShoppingEngine) {
 		if items < 0 {
 			c.JSON(500, gin.H{
 				"status":  "failed",
-				"message": "Error fetching total sold Items",
+				"message": "Error fetching total sold items",
 			})
 			return
 		}
@@ -88,7 +88,7 @@ func registerAdminRoutes(rg *gin.RouterGroup, app internal.ShoppingEngine) {
 		})
 	})
 
-	rg.GET("/total_discount", func(c *gin.Context) {
+	rg.GET("/discount", func(c *gin.Context) {
 		// Get the total discount applied
 		totalDiscount := app.OrderHistory().TotalDiscountAmount()
 
@@ -145,7 +145,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, app internal.ShoppingEngine) {
 
 	rg.POST("/register", func(c *gin.Context) {
 		var request struct {
-			Email 	 string `json:"email"`
+			Email 	 string `json:"username"`
 			Name     string `json:"name"`
 		}
 	
