@@ -21,7 +21,7 @@ func main() {
 	// Loading port from env
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.Printf("Port not found, Running on default 8080...")
+		// Default value
 		port = "8080"
 	}
 	

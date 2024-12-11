@@ -67,7 +67,7 @@ func (ctx *zapSession) close() error {
 
 // logLeveler returns the log level for the logger.
 func (ctx *zapSession) logLeveler() zapcore.LevelEnabler {
-	if ctx.environment == "Development" {
+	if ctx.environment == "Dev" || ctx.environment == "dev" {
 		return zapcore.DebugLevel
 	}
 	return zapcore.InfoLevel

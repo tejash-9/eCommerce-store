@@ -32,7 +32,7 @@ func GetAppInstance() ShoppingEngine {
 	instance.Do(func() {
 		interval, err := strconv.Atoi(os.Getenv(DiscountIntervalEnv))
 		if err != nil {
-			Logger.Sugar().Debugf("Unable to read discount interval from env, using default value!")
+			Logger.Sugar().Debug("Unable to read discount interval from env, using default value!")
 			interval = 5 // Default discount interval if not provided
 		}
 		orderBook := newOrderBook()

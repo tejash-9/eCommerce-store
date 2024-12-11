@@ -47,11 +47,7 @@ func (s *shoppingEngine) GetDiscountCoupon(userId string) (string, error) {
 		return "", fmt.Errorf("Discount code not applicable")
 	}
 
-	coupon := s.GenerateDiscountCouponForUser(userId)
-	if err != nil {
-		return "", err
-	}
-	return coupon, nil
+	return s.GenerateDiscountCouponForUser(userId), nil
 }
 
 // Checkout processes the user's cart and applies a coupon if valid

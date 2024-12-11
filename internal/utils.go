@@ -13,7 +13,7 @@ import (
 var (
 	shoppingApp 	*shoppingEngine
 	instance        sync.Once
-    Logger = utilities.Logger.Session("dev", "github.com/ecommerce-store")
+    Logger = utilities.Logger.Session("dev", "eCommerce-store")
 )
 
 // nTH order (value of n)
