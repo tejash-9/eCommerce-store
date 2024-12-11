@@ -50,7 +50,7 @@ func (s *shoppingEngine) RegisterProduct(name string, description string, quanti
 	// Check if product already exists for the seller
 	for _, product := range s.Inventory.ProductsBySeller[sellerId] {
 		if product.Name == name {
-			return nil, fmt.Errorf("product with name already exists by the seller!") // Error if the product already exists
+			return nil, fmt.Errorf("product with name already exists by the seller") // Error if the product already exists
 		}
 	}
 
@@ -62,38 +62,47 @@ func (s *shoppingEngine) RegisterProduct(name string, description string, quanti
 	s.Inventory.ProductsBySeller[sellerId] = append(s.Inventory.ProductsBySeller[sellerId], product)
 	s.Inventory.Products[id] = product
 
+	Logger.Sugar().Infof("Product %s registered successfully", id)
 	return product, nil
 }
 
 // GetProduct fetches a product by its ID from the inventory
 func (s *shoppingEngine) GetProduct(productId string) (*product, error) {
 	if s.Inventory.Products[productId] == nil {
-		return nil, fmt.Errorf("Product not found") // Return error if the product does not exist
+		return nil, fmt.Errorf("Product not found")
 	}
 	return s.Inventory.Products[productId], nil
 }
 
+func (s *shoppingEngine) RemoveProduct(productId string) error {
+	if s.Inventory.Products[productId] == nil {
+		return fmt.Errorf("Product not found")
+	}
+	s.Inventory.Products[productId] = nil
+	return nil
+}
+
 // IsAvailable checks if the requested quantity of the product is in stock
 func (p *product) IsAvailable(quantity int) bool {
-	return p.Quantity >= quantity // Return true if stock is sufficient
+	return p.Quantity >= quantity
 }
 
 // GetPrice returns the price of the product
 func (p *product) GetPrice() float64 {
-	return p.Price // Return the product's price
+	return p.Price
 }
 
 // AddToStock increases the product's stock by the specified quantity
 func (p *product) AddToStock(quantity int) {
-	p.Quantity += quantity // Increment stock quantity
+	p.Quantity += quantity
 }
 
 // RemoveFromStock decreases the product's stock by the specified quantity, returns false if insufficient stock
 func (p *product) RemoveFromStock(quantity int) bool {
 	if p.Quantity < quantity {
-		return false // Return false if not enough stock
+		return false
 	}
-	p.Quantity -= quantity // Decrease stock by the specified quantity
+	p.Quantity -= quantity
 	return true
 }
 

@@ -17,7 +17,7 @@ func newUser(id string, name string, email string) *user {
 	return &user{
 		Id:       id,        
 		Name:     name,      
-		Email:    email, 
+		Email:    email,
 		Cart:     make(map[string]int),
 	}
 }
@@ -26,7 +26,7 @@ func newUser(id string, name string, email string) *user {
 func (s *shoppingEngine) RegisterUser(name string, email string) (*user, error) {
 	// Check if the email is already registered
 	if s.UserMap[email] != "" {
-		return nil, fmt.Errorf("email already exists!") // Error if email is already registered
+		return nil, fmt.Errorf("Email already exists") // Error if email is already registered
 	}
 	
 	// Generate a unique ID and create a new user
@@ -37,6 +37,7 @@ func (s *shoppingEngine) RegisterUser(name string, email string) (*user, error) 
 	s.Users[id] = user
 	s.UserMap[email] = id
 
+	Logger.Sugar().Infof("User with username %s registered successfully", email)
 	return user, nil
 }
 
@@ -44,7 +45,7 @@ func (s *shoppingEngine) RegisterUser(name string, email string) (*user, error) 
 func (s *shoppingEngine) GetUser(userId string) (*user, error) {
 	// Check if the user exists in the system
 	if s.Users[userId] == nil {
-		return nil, fmt.Errorf("User not found") // Error if the user is not found
+		return nil, fmt.Errorf("User not found!") // Error if the user is not found
 	}
 	return s.Users[userId], nil
 }
@@ -64,4 +65,17 @@ func (s *shoppingEngine) GetUserByUsername(username string) (*user, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *shoppingEngine) RemoveUser(userId string) error {
+	// Check if the user exists in the system
+	if s.Users[userId] == nil {
+		return fmt.Errorf("User not found") // Error if the user is not found
+	}
+	username := s.Users[userId].Email
+	delete(s.Users, userId)
+	delete(s.UserMap, username)
+
+	Logger.Sugar().Infof("User %s removed successfully", userId)
+	return nil
 }

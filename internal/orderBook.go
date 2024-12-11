@@ -6,10 +6,7 @@ import (
 )
 
 type OrderBook interface {
-	TotalSoldItems()        int
-	TotalPurchaseAmount()   float64
-	ListDiscountCoupons()   []string
-	TotalDiscountAmount()   float64
+	GetAnalytics() (int, float64, float64, []string)
 }
 
 type orderBook struct {
@@ -23,16 +20,13 @@ type orderBook struct {
 	Counter           int               	// Counter for order numbering
 }
 
+// newOrderBook Creates and returns a new orderBook object
 func newOrderBook() *orderBook {
 	return &orderBook{
 		Counter: 1,
 		OrderMutex: &sync.Mutex{},
 		Orders: make(map[string]*order), 
 		OrdersByUserId: make(map[string][]*order),
-		ItemsSold: 0,
-		PurchaseAmount: 0.0,
-		TotalDiscount: 0.0,
-		AppliedCoupons: []string{},
 	}
 }
 
@@ -52,23 +46,28 @@ func (s *shoppingEngine) PlaceOrder(userId string, amount float64, coupon string
 	if coupon != "" {
 		// Check if the coupon is valid based on a discount interval (e.g., every N orders)
 		if s.OrderBook.Counter % s.DiscountInterval != 0 {
-			Logger.Sugar().Errorf("Coupon has expired for user: %s", userId)
-			return nil, fmt.Errorf("Coupon has expired!") // Return error if coupon is expired
+			Logger.Sugar().Debugf("Coupon has expired for user: %s", userId)
+			return nil, fmt.Errorf("Coupon has expired")
+		}
+
+		if s.Coupons[userId] != coupon {
+			return nil, fmt.Errorf("Invalid coupon code")
 		}
 		// Apply a 10% discount on the order total
 		discount = amount * 0.10
 	}
 
-	var processedItems []string // List to track products whose stock was adjusted
-	items := 0 					// Total number of items in the user's cart
+	var processedItems []string
+	var items int
 
 	// Iterate through each item in the user's cart to adjust stock
 	for key, value := range s.Users[userId].Cart {
 		if !s.Inventory.Products[key].RemoveFromStock(value) {
 			// Rollback any stock changes if a product is out of stock
+			Logger.Sugar().Debugf("Product %s is out of stock, rolling back the cart changes!", key)
 			s.RollbackStock(userId, processedItems)
-			Logger.Sugar().Errorf("Product %s is out of stock", key)
-			return nil, fmt.Errorf("product %s is out of stock", key) // Return error if stock is insufficient
+
+			return nil, fmt.Errorf("Product %s is out of stock", key)
 		}
 		// Track processed items for rollback if needed
 		processedItems = append(processedItems, key)
@@ -78,25 +77,27 @@ func (s *shoppingEngine) PlaceOrder(userId string, amount float64, coupon string
 	// Calculate the final amount after applying the discount
 	finalAmount := amount - discount
 
-	// Update the order book with the new order data
-	s.OrderBook.ItemsSold += items            // Increment total items sold
-	s.OrderBook.PurchaseAmount += finalAmount // Increment total purchase amount
-	s.OrderBook.TotalDiscount += discount     // Increment total discount applied
-
 	// Generate a new unique order ID and create the order object
 	id := generateUUID()
 	order := newOrder(id, userId, s.Users[userId].Cart, amount, coupon, discount, finalAmount)
 
 	// Store the newly created order in the order book
 	s.OrderBook.Orders[id] = order
-	// Associate the order with the user
 	s.OrderBook.OrdersByUserId[userId] = append(s.OrderBook.OrdersByUserId[userId], order)
 	s.OrderBook.Counter++ // Increment the order counter
 
 	// Clear the user's cart after placing the order
-	s.Users[userId].Cart = nil
+	s.Users[userId].Cart = make(map[string]int)
 
-	Logger.Sugar().Infof("Order placed successfully! total amount: %f, total discount: %f, item count: %d", s.OrderBook.PurchaseAmount, s.OrderBook.TotalDiscount, s.OrderBook.ItemsSold)
+	// Update the order book
+	s.OrderBook.ItemsSold += items            
+	s.OrderBook.PurchaseAmount += finalAmount
+	s.OrderBook.TotalDiscount += discount
+	if coupon != "" {
+		s.OrderBook.AppliedCoupons = append(s.OrderBook.AppliedCoupons, coupon)
+	}
+
+	Logger.Sugar().Infof("Order placed successfully with id: %s by user: %s", id, userId)
 	return order, nil
 }
 
@@ -111,22 +112,10 @@ func (s *shoppingEngine) RollbackStock(userId string, products []string) {
 	}
 }
 
-// TotalSoldItems returns the total number of items sold in the order book
-func (o *orderBook) TotalSoldItems() int {
-	return o.ItemsSold
-}
+// GetAnalytics returns the information about analytics related to orders
+func (o *orderBook) GetAnalytics() (int, float64, float64, []string) {
+	o.OrderMutex.Lock()
+	defer o.OrderMutex.Unlock()
 
-// TotalPurchaseAmount returns the total amount of money spent on purchases in the order book
-func (o *orderBook) TotalPurchaseAmount() float64 {
-	return o.PurchaseAmount
-}
-
-// ListDiscountCoupons returns a list of all applied discount coupons
-func (o *orderBook) ListDiscountCoupons() []string {
-	return o.AppliedCoupons
-}
-
-// TotalDiscountAmount returns the total amount of discount applied across all orders
-func (o *orderBook) TotalDiscountAmount() float64 {
-	return o.TotalDiscount
+	return o.ItemsSold, o.PurchaseAmount, o.TotalDiscount, o.AppliedCoupons
 }
