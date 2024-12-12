@@ -6,12 +6,12 @@ import (
 
 // product represents a single product in the inventory
 type product struct {
-	Id              string  // Unique identifier for the product
-	Name   			string  // Name of the product
-	Description    	string  // Description of the product
-	Quantity        int     // Available stock quantity
-	Price           float64 // Price of the product
-	SellerId        string  // Seller's unique identifier
+	Id              string  `json:"id"` 			// Unique identifier for the product
+	Name   			string  `json:"name"` 			// Name of the product
+	Description    	string  `json:"description"` 	// Description of the product
+	Quantity        int     `json:"quantity"` 		// Available stock quantity
+	Price           float64 `json:"price"` 			// Price of the product
+	SellerId        string  `json:"seller_id"` 		// Seller's unique identifier
 }
 
 // inventory manages the collection of products and their categorization by seller

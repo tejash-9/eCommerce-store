@@ -70,9 +70,9 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			"message": "Login successful",
 			"data":    gin.H{
 				"user": gin.H{
-					"Id": user.Id,
-					"Name": user.Name,
-					"Email": user.Email,
+					"id": user.Id,
+					"name": user.Name,
+					"email": user.Email,
 				},
 			},
 		})
@@ -124,9 +124,9 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			"message": "User registered successfully",
 			"data":    gin.H{
 				"user": gin.H{
-					"Id": user.Id,
-					"Name": user.Name,
-					"Email": user.Email,
+					"id": user.Id,
+					"name": user.Name,
+					"email": user.Email,
 				},
 			},
 		})

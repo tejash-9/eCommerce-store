@@ -73,7 +73,7 @@ func (s *shoppingEngine) Checkout(userId string, couponCode string) (*order, err
 	if couponCode != "" {
 		// Validate the coupon code
 		if s.Coupons[userId] == "" || s.Coupons[userId] != couponCode {
-			return nil, fmt.Errorf("Invalid coupon code!")
+			return nil, fmt.Errorf("Invalid coupon code")
 		}
 
 		// Place the order with discount
