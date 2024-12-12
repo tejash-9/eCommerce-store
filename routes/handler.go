@@ -26,7 +26,7 @@ func RegisterRoutes(router *gin.Engine, svc internal.ShoppingEngine) {
 
 func registerAdminRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 	rg.GET("/analytics", func(c *gin.Context) {
-		// Get the total amount for the purchase
+		// Get Order analytics
 		items, amount, discount, coupons := svc.OrderHistory().GetAnalytics()
 		c.JSON(200, gin.H{
 			"status":  	"success",
@@ -43,19 +43,30 @@ func registerAdminRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 
 func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 	rg.POST("/login", func(c *gin.Context) {
+		// Expected request body
 		var request struct {
 			Username string `json:"username"`
 		}
 	
 		if err := c.ShouldBindJSON(&request); err != nil {
+			// Invalid request body
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Invalid request",
 			})
 			return
 		}
-	
-		// Check if the username and password match
+
+		// Check if username is empty
+		if request.Username == "" {
+			c.JSON(400, gin.H{
+				"status":  "error",
+				"message": "Username is required",
+			})
+			return
+		}
+
+		// Check if the username is valid
 		user, err := svc.GetUserByUsername(request.Username)
 		if err != nil {
 			c.JSON(404, gin.H{
@@ -65,6 +76,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Successful response
 		c.JSON(200, gin.H{
 			"status":  "success",
 			"message": "Login successful",
@@ -79,19 +91,22 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 	})
 
 	rg.POST("/register", func(c *gin.Context) {
+		// Expected request body
 		var request struct {
 			Email 	string `json:"email"`
 			Name    string `json:"name"`
 		}
 	
 		if err := c.ShouldBindJSON(&request); err != nil {
+			// Invalid request body
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Invalid request",
 			})
 			return
 		}
-	
+		
+		// Check if name or email is empty
 		if request.Email == "" || request.Name == "" {
 			c.JSON(400, gin.H{
 				"status":  "error",
@@ -110,8 +125,10 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Register user
 		user, err := svc.RegisterUser(request.Name, request.Email)
 		if err != nil {
+			// Failed to register user
 			c.JSON(500, gin.H{
 				"status":  "error",
 				"message": err.Error(),
@@ -119,6 +136,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Successful response
 		c.JSON(201, gin.H{
 			"status":  "success",
 			"message": "User registered successfully",
@@ -159,6 +177,7 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Successful response
 		c.JSON(200, gin.H{
 			"status":  "success",
 			"message": "Discount coupon retrieved successfully",
@@ -180,12 +199,14 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Expected request body
 		var cartItem struct {
 			ProductId  string  `json:"product_id"`
 			Quantity   int     `json:"quantity"`
 		}
 	
 		if err := c.ShouldBindJSON(&cartItem); err != nil {
+			// Invalid request body
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Invalid request",
@@ -193,6 +214,7 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Add product to cart
 		cartMap, err := svc.AddToCart(userId, cartItem.ProductId, cartItem.Quantity)
 		if err != nil {
 			c.JSON(500, gin.H{
@@ -208,6 +230,8 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 				"quantity": 	value,
 			})
 		}
+
+		// Successful response
 		c.JSON(200, gin.H{
 			"status":  "success",
 			"message": "Product added to cart successfully",
@@ -230,6 +254,7 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 
+		// Get cart details for the user
 		cartMap, err := svc.GetCart(userId)
 		if err != nil {
 			c.JSON(500, gin.H{
@@ -245,6 +270,8 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 				"quantity": value,
 			})
 		}
+
+		// Successful response
 		c.JSON(200, gin.H{
 			"status":  "success",
 			"message": "User cart retrieved successfully",
@@ -259,6 +286,7 @@ func registerUserRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 
 	rg.POST("/", func(c *gin.Context) {
+		// Expected request body
 		var request struct {
 			UserId      string  `json:"user_id"`
 			Name        string  `json:"name"`
@@ -268,6 +296,7 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 		}
 	
 		if err := c.ShouldBindJSON(&request); err != nil {
+			// Invalid request body
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Invalid request format",
@@ -284,7 +313,7 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 	
-		// Add the product (call to backend logic)
+		// Add the product
 		product, err := svc.RegisterProduct(request.Name, request.Description, request.Quantity, request.UserId, request.Price)
 		if err != nil {
 			c.JSON(500, gin.H{
@@ -293,7 +322,8 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			})
 			return
 		}
-	
+		
+		// Successful response
 		c.JSON(201, gin.H{
 			"status":  "success",
 			"message": "Product added successfully",
@@ -307,6 +337,7 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 		// Parse user id from the URL parameters (e.g., /:user_id/cart)
 		productId := c.Param("product_id")
 		if productId == "" {
+			// If productId is empty, return a bad request error
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Product ID cannot be empty",
@@ -314,6 +345,7 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 		
+		// Get the product details
 		product, err := svc.GetProduct(productId)
 		if err != nil {
 			c.JSON(404, gin.H{
@@ -322,7 +354,8 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			})
 			return
 		}
-	
+		
+		// Successful response
 		c.JSON(200, gin.H{
 			"status":  "success",
 			"message": "Product retrieved successfully",
@@ -336,12 +369,13 @@ func registerProductRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 func registerOrderRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 
 	rg.POST("/checkout", func(c *gin.Context) {
-		// Parse coupon code from the request body (assuming it's a JSON request)
+		// Expected request body
 		var request struct {
 			UserId     string `json:"user_id"`
 			CouponCode string `json:"coupon_code"`
 		}
 		if err := c.ShouldBindJSON(&request); err != nil {
+			// Invalid request body
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "Invalid request",
@@ -349,6 +383,7 @@ func registerOrderRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 		if request.UserId == "" {
+			// If userId is empty, return a bad request error
 			c.JSON(400, gin.H{
 				"status":  "error",
 				"message": "User ID cannot be empty",
@@ -356,7 +391,7 @@ func registerOrderRoutes(rg *gin.RouterGroup, svc internal.ShoppingEngine) {
 			return
 		}
 		
-		// Call the Checkout function
+		// Call the checkout function
 		order, err := svc.Checkout(request.UserId, request.CouponCode)
 		if err != nil {
 			c.JSON(500, gin.H{
